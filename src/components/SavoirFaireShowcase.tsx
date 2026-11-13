@@ -101,6 +101,17 @@ export function SavoirFaireShowcase() {
     return () => observer.disconnect();
   }, [reducedMotion, isMobile]);
 
+  // Ensure cached videos immediately reveal instead of waiting for late events
+  useEffect(() => {
+    if (reducedMotion) return;
+    if (video1Ref.current && video1Ref.current.readyState >= 2) {
+      setVideo1Ready(true);
+    }
+    if (video2Ref.current && video2Ref.current.readyState >= 2) {
+      setVideo2Ready(true);
+    }
+  }, [reducedMotion, isMobile]);
+
   // Smooth scroll fade-in for text blocks over video
   useEffect(() => {
     if (reducedMotion) {
@@ -159,8 +170,9 @@ export function SavoirFaireShowcase() {
               muted
               loop
               playsInline
-              preload="metadata"
+              preload="auto"
               poster="/assets/poster-atelier.jpg"
+              onLoadedData={() => setVideo1Ready(true)}
               onCanPlay={() => setVideo1Ready(true)}
               onPlaying={() => setVideo1Ready(true)}
               aria-hidden="true"
@@ -227,12 +239,13 @@ export function SavoirFaireShowcase() {
               muted
               loop
               playsInline
-              preload="metadata"
+              preload="auto"
               poster={
                 isMobile
                   ? '/assets/poster-savoir-faire-mobile.jpg'
                   : '/assets/poster-savoir-faire-pc.jpg'
               }
+              onLoadedData={() => setVideo2Ready(true)}
               onCanPlay={() => setVideo2Ready(true)}
               onPlaying={() => setVideo2Ready(true)}
               aria-hidden="true"

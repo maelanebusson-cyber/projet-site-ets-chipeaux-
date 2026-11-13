@@ -5,7 +5,6 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { PageId, SERVICES } from './data/siteData';
-import { IntroCurtain, hasSeenIntro } from './components/IntroCurtain';
 import { SiteHeader } from './components/SiteHeader';
 import { HomePage } from './components/HomePage';
 import { ServicesIndexPage } from './components/ServicesIndexPage';
@@ -31,12 +30,15 @@ const VALID_PAGES = new Set<PageId>([
 ]);
 
 function readPageFromHash(): PageId {
-  if (typeof window === 'undefined') return 'accueil';
+  if (typeof window === 'undefined') return 'service-industriel';
   const raw = window.location.hash.replace(/^#\/?/, '').trim() as PageId;
-  return VALID_PAGES.has(raw) ? raw : 'accueil';
+  return VALID_PAGES.has(raw) ? raw : 'service-industriel';
 }
 
 function getDocumentTitle(page: PageId): string {
+  if (page === 'service-industriel') {
+    return 'Tuyauterie industrielle & Savoir-faire — ETS Chipeaux';
+  }
   if (page === 'accueil') {
     return 'ETS Chipeaux — Chauffage, climatisation, sanitaire & tuyauterie industrielle | Montbéliard';
   }
@@ -54,16 +56,6 @@ function getDocumentTitle(page: PageId): string {
 export default function App() {
   const [currentPage, setCurrentPage] = useState<PageId>(() => readPageFromHash());
   const [preselectedService, setPreselectedService] = useState<string | undefined>(undefined);
-
-  // Intro curtain: shown only on initial visit to the home page
-  const [showIntro, setShowIntro] = useState<boolean>(() => {
-    const initialPage = readPageFromHash();
-    return initialPage === 'accueil' && !hasSeenIntro();
-  });
-  const [siteVisible, setSiteVisible] = useState<boolean>(() => {
-    const initialPage = readPageFromHash();
-    return initialPage !== 'accueil' || hasSeenIntro();
-  });
 
   useEffect(() => {
     document.title = getDocumentTitle(currentPage);
@@ -87,7 +79,7 @@ export default function App() {
     }
 
     setCurrentPage(page);
-    const targetHash = page === 'accueil' ? '#accueil' : `#${page}`;
+    const targetHash = `#${page}`;
     if (window.location.hash !== targetHash) {
       window.history.pushState(null, '', targetHash);
     }
@@ -98,31 +90,19 @@ export default function App() {
 
   return (
     <>
-      {showIntro && (
-        <IntroCurtain
-          onRevealStart={() => setSiteVisible(true)}
-          onComplete={() => {
-            setSiteVisible(true);
-            setShowIntro(false);
-          }}
-        />
+      <SiteHeader currentPage={currentPage} onNavigate={handleNavigate} />
+
+      {currentPage === 'accueil' && <HomePage onNavigate={handleNavigate} />}
+      {currentPage === 'services' && <ServicesIndexPage onNavigate={handleNavigate} />}
+      {currentService && <ServicePage service={currentService} onNavigate={handleNavigate} />}
+      {currentPage === 'realisations' && <RealisationsPage onNavigate={handleNavigate} />}
+      {currentPage === 'rendez-vous' && (
+        <RendezVousPage preselectedService={preselectedService} onNavigate={handleNavigate} />
       )}
+      {currentPage === 'contact' && <ContactPage onNavigate={handleNavigate} />}
 
-      <div className={`site-reveal ${siteVisible ? '' : 'site-reveal--hidden'}`}>
-        <SiteHeader currentPage={currentPage} onNavigate={handleNavigate} />
-
-        {currentPage === 'accueil' && <HomePage onNavigate={handleNavigate} />}
-        {currentPage === 'services' && <ServicesIndexPage onNavigate={handleNavigate} />}
-        {currentService && <ServicePage service={currentService} onNavigate={handleNavigate} />}
-        {currentPage === 'realisations' && <RealisationsPage onNavigate={handleNavigate} />}
-        {currentPage === 'rendez-vous' && (
-          <RendezVousPage preselectedService={preselectedService} onNavigate={handleNavigate} />
-        )}
-        {currentPage === 'contact' && <ContactPage onNavigate={handleNavigate} />}
-
-        <SiteFooter onNavigate={handleNavigate} />
-        <AssistantWidget onNavigate={handleNavigate} />
-      </div>
+      <SiteFooter onNavigate={handleNavigate} />
+      <AssistantWidget onNavigate={handleNavigate} />
     </>
   );
 }
